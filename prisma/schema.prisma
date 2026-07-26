@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ApplicationStatus {
+  pending
+  under_review
+  approved
+  rejected
+  revision_requested
+}
+
+enum AdminRole {
+  compliance_officer
+  admin
+  super_admin
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         AdminRole @default(compliance_officer)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model KycApplication {
+  id        String            @id @default(cuid())
+  referenceId String          @unique
+  status    ApplicationStatus @default(pending)
+
+  firstName         String
+  fatherName        String
+  grandfatherName   String  @default("")
+  phone             String
+  email             String
+  dob               String  @default("")
+  age               String  @default("")
+  placeOfBirth      String  @default("")
+  nationality       String  @default("")
+  countryOfResidence String @default("")
+  tinNumber         String  @default("")
+
+  cityAdministration String @default("")
+  zone               String @default("")
+  subCity            String @default("")
+  woredaKebele       String @default("")
+  houseNumber        String @default("")
+  preferredContact   String @default("phone")
+  marketingCommunications Boolean @default(false)
+
+  employmentStatus String @default("")
+
+  hasBeneficiary           Boolean @default(false)
+  beneficiaryName          String  @default("")
+  beneficiaryRelationship  String  @default("")
+
+  bankName       String  @default("")
+  bankBranch     String  @default("")
+  accountNumber  String  @default("")
+  bankChangeAck  Boolean @default(false)
+  settlementOptions Json  @default("[]")
+
+  investorType    String @default("")
+  faydaNumber     String @default("")
+  faydaIssueDate  String @default("")
+  faydaExpiryDate String @default("")
+  faydaFront      String?
+  faydaBack       String?
+  kebeleId        String?
+  drivingLicense  String?
+
+  publiclyTradedOwner      String @default("no")
+  publiclyTradedDetails    String @default("")
+  brokerageEmployee        String @default("no")
+  brokerageEmployeeDetails String @default("")
+
+  sourceOfFunds         String @default("")
+  sourceOfIncomeDetails String @default("")
+  annualNetIncome       String @default("")
+  netWorth              String @default("")
+
+  pepStatus    String @default("no")
+  pepDetails   String @default("")
+
+  bankruptcyDisclosure String @default("no")
+  bankruptcyDetails    String @default("")
+
+  criminalRecord        String @default("no")
+  criminalRecordDetails String @default("")
+
+  riskTolerance String @default("")
+
+  stockExperience           String @default("")
+  bondExperience            String @default("")
+  stockMonthlyValue         String @default("")
+  fixedIncomeMonthlyValue   String @default("")
+
+  investmentObjective Json @default("[]")
+
+  applicantName       String @default("")
+  dateOfApplication   String @default("")
+  submitConsent         Boolean @default(false)
+
+  reviewNotes String   @default("")
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  submittedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([email])
+  @@index([submittedAt])
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  action         String
+  referenceId    String?
+  applicant      String?
+  email          String?
+  previousStatus String?
+  newStatus      String?
+  reviewedBy     String?
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model KycCounter {
+  id    String @id @default("kyc")
+  value Int    @default(100000)
+}
