@@ -19,6 +19,49 @@ function safeFilename(raw) {
   return path.basename(raw || "").replace(/[^a-zA-Z0-9._-]/g, "");
 }
 
+/**
+ * @swagger
+ * /api/admin/documents/{filename}:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get a KYC document
+ *     description: Retrieve a document (Fayda ID, Kebele ID, or driving license) by filename.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: filename
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The document filename
+ *     responses:
+ *       200:
+ *         description: Document file
+ *         content:
+ *           application/octet-stream:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       400:
+ *         description: Invalid filename
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Document not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get("/documents/:filename", async (req, res) => {
   try {
     const filename = safeFilename(req.params.filename);
@@ -61,6 +104,76 @@ router.get("/documents/:filename", async (req, res) => {
 
 const VALID_STATUSES = ["pending", "under_review", "approved", "rejected", "revision_requested"];
 
+/**
+ * @swagger
+ * /api/admin/applications:
+ *   get:
+ *     tags: [Admin]
+ *     summary: List KYC applications
+ *     description: Get a paginated list of KYC applications with optional filtering by status and search query.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, under_review, approved, rejected, revision_requested, all]
+ *         description: Filter by application status
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by reference ID, name, email, or phone
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *           maximum: 100
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: Paginated list of applications
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/ApplicationSummary'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Failed to fetch applications
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get("/applications", async (req, res) => {
   try {
     const { status, search, page = "1", limit = "20" } = req.query;
@@ -110,6 +223,42 @@ router.get("/applications", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/admin/applications/{id}:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get application details
+ *     description: Get full details of a KYC application by ID or reference ID.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Application ID or reference ID (e.g., KYC-250701-100001)
+ *     responses:
+ *       200:
+ *         description: Application details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/KycApplication'
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Application not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get("/applications/:id", async (req, res) => {
   try {
     const app = await prisma.kycApplication.findFirst({
@@ -129,6 +278,66 @@ router.get("/applications/:id", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/admin/applications/{id}/status:
+ *   patch:
+ *     tags: [Admin]
+ *     summary: Update application status
+ *     description: Update the status of a KYC application. Requires compliance_officer, admin, or super_admin role.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Application ID or reference ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UpdateStatusRequest'
+ *     responses:
+ *       200:
+ *         description: Status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 application:
+ *                   $ref: '#/components/schemas/KycApplication'
+ *       400:
+ *         description: Invalid status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       403:
+ *         description: Insufficient permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Application not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.patch("/applications/:id/status", requireRole(...REVIEW_ROLES), async (req, res) => {
   try {
     const { status, reviewNotes } = req.body;
@@ -179,6 +388,35 @@ router.patch("/applications/:id/status", requireRole(...REVIEW_ROLES), async (re
   }
 });
 
+/**
+ * @swagger
+ * /api/admin/stats:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get dashboard statistics
+ *     description: Get aggregated statistics for the admin dashboard including application counts, rejection rate, and monthly volume forecast.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Stats'
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Failed to fetch stats
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get("/stats", async (_req, res) => {
   try {
     const now = new Date();
@@ -231,6 +469,48 @@ router.get("/stats", async (_req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/admin/audit-log:
+ *   get:
+ *     tags: [Admin]
+ *     summary: Get audit log
+ *     description: Retrieve the audit log of all actions performed on KYC applications.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *           maximum: 100
+ *         description: Maximum number of log entries to return
+ *     responses:
+ *       200:
+ *         description: Audit log entries
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/AuditLog'
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Failed to fetch audit log
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get("/audit-log", async (req, res) => {
   try {
     const limit = Math.min(100, parseInt(req.query.limit, 10) || 50);

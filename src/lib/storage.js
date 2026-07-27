@@ -43,8 +43,15 @@ let s3Client;
 
 function getS3Client() {
   if (!s3Client) {
+    let endpoint = process.env.S3_ENDPOINT;
+    if (process.env.S3_SSL === "true" && endpoint && !endpoint.startsWith("http")) {
+      endpoint = `https://${endpoint}`;
+    } else if (process.env.S3_SSL === "false" && endpoint && !endpoint.startsWith("http")) {
+      endpoint = `http://${endpoint}`;
+    }
+
     s3Client = new S3Client({
-      endpoint: process.env.S3_ENDPOINT,
+      endpoint,
       region: process.env.S3_REGION || "us-east-1",
       credentials: {
         accessKeyId: process.env.S3_ACCESS_KEY,
