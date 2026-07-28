@@ -3,5 +3,6 @@ uploads/*
 !uploads/.gitkeep
 data/db.json
 data/applications.json
+*.sh
 .env
 *.log
