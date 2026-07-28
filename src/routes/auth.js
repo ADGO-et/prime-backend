@@ -2,6 +2,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const { prisma } = require("../lib/prisma");
 const { signToken, requireAuth } = require("../middleware/auth");
+const { loginLimiter } = require("../middleware/rateLimit");
 
 const router = express.Router();
 
@@ -44,7 +45,7 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/login", async (req, res) => {
+router.post("/login", loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
