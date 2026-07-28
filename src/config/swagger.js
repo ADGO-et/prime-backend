@@ -17,6 +17,10 @@ const options = {
         url: "http://localhost:5000",
         description: "Development server",
       },
+      {
+        url: "https://dev-api.primecapitalsc.com/",
+        description: "Deployed server",
+      },
     ],
     components: {
       securitySchemes: {
