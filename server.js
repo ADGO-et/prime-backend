@@ -7,6 +7,7 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./src/config/swagger");
 const { validateEnv } = require("./src/config/env");
 const { getStorageInfo, ensureBucket, isS3Enabled } = require("./src/lib/storage");
+const { seedDatabase } = require("./prisma/seed");
 const kycRoutes = require("./src/routes/kyc");
 const adminRoutes = require("./src/routes/admin");
 const authRoutes = require("./src/routes/auth");
@@ -17,7 +18,9 @@ validateEnv();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.set("trust proxy", 1);
+const trustProxy = process.env.TRUST_PROXY ?? "1";
+const parsedTrustProxy = trustProxy === "true" || trustProxy === "1" ? 1 : trustProxy === "false" ? 0 : trustProxy;
+app.set("trust proxy", parsedTrustProxy);
 
 const allowedOrigins = (
   process.env.CORS_ORIGINS ||
@@ -81,7 +84,9 @@ app.use((err, _req, res, _next) => {
   res.status(err.status || 500).json({ error: err.message || "Internal server error" });
 });
 
-const server = app.listen(PORT, async () => {
+let server;
+
+async function startServer() {
   if (isS3Enabled()) {
     try {
       await ensureBucket();
@@ -92,8 +97,18 @@ const server = app.listen(PORT, async () => {
   } else {
     console.log("Object storage: local uploads/ (set S3_* env for MinIO/S3)");
   }
-  console.log(`Prime Capital Backend API running on http://localhost:${PORT}`);
-  console.log(`Swagger docs: http://localhost:${PORT}/api-docs`);
+
+  await seedDatabase();
+
+  server = app.listen(PORT, () => {
+    console.log(`Prime Capital Backend API running on http://localhost:${PORT}`);
+    console.log(`Swagger docs: http://localhost:${PORT}/api-docs`);
+  });
+}
+
+startServer().catch((err) => {
+  console.error("Server startup failed:", err);
+  process.exit(1);
 });
 
 function shutdown(signal) {
