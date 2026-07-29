@@ -25,7 +25,7 @@ app.set("trust proxy", parsedTrustProxy);
 
 const allowedOrigins = (
   process.env.CORS_ORIGINS ||
-  "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001"
+  "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001,https://primecapitalsc.com,https://admin.primecapitalsc.com"
 ).split(",");
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
