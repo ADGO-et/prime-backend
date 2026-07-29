@@ -104,7 +104,7 @@ async function startServer() {
   await seedDatabase();
 
   server = app.listen(PORT, () => {
-    console.log(`Prime Capital Backend API running on http://localhost:${PORT}`);
+    console.log(`NEW Prime Capital Backend API running on http://localhost:${PORT}`);
     console.log(`Swagger docs: http://localhost:${PORT}/api-docs`);
   });
 }
