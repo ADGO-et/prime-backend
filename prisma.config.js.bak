@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   seed: {
     run: "node prisma/seed.js",
   },

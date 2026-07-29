@@ -36,6 +36,7 @@ model KycApplication {
   referenceId String          @unique
   status    ApplicationStatus @default(pending)
 
+  fullName          String  @default("")
   firstName         String
   fatherName        String
   grandfatherName   String  @default("")
@@ -44,8 +45,11 @@ model KycApplication {
   dob               String  @default("")
   age               String  @default("")
   placeOfBirth      String  @default("")
+  gender            String  @default("")
+  maritalStatus     String  @default("")
   nationality       String  @default("")
   countryOfResidence String @default("")
+  residentialStatus String  @default("")
   tinNumber         String  @default("")
 
   cityAdministration String @default("")
@@ -53,10 +57,19 @@ model KycApplication {
   subCity            String @default("")
   woredaKebele       String @default("")
   houseNumber        String @default("")
+  tel                String  @default("")
   preferredContact   String @default("phone")
   marketingCommunications Boolean @default(false)
 
   employmentStatus String @default("")
+  occupation       String  @default("")
+  employerName     String  @default("")
+  employerAddress  String  @default("")
+  employerPhone    String  @default("")
+  businessName     String  @default("")
+  natureOfBusiness String  @default("")
+  profession       String  @default("")
+  businessPhone    String  @default("")
 
   hasBeneficiary           Boolean @default(false)
   beneficiaryName          String  @default("")
@@ -65,17 +78,70 @@ model KycApplication {
   bankName       String  @default("")
   bankBranch     String  @default("")
   accountNumber  String  @default("")
+  accountTitle   String  @default("")
   bankChangeAck  Boolean @default(false)
   settlementOptions Json  @default("[]")
 
   investorType    String @default("")
+  idType          String @default("")
+  idNumber          String @default("")
+  idIssueDate       String @default("")
+  idExpiryDate      String @default("")
   faydaNumber     String @default("")
   faydaIssueDate  String @default("")
   faydaExpiryDate String @default("")
   faydaFront      String?
   faydaBack       String?
+  passportNumber      String @default("")
+  passportIssueDate   String @default("")
+  passportExpiryDate  String @default("")
+  kebeleIdNumber      String @default("")
+  kebeleIssueDate     String @default("")
+  kebeleExpiryDate    String @default("")
   kebeleId        String?
   drivingLicense  String?
+
+  // Corporate account fields
+  companyName             String  @default("")
+  investorCategory        String  @default("")
+  economicSector          String  @default("")
+  registeredAddress       String  @default("")
+  country                 String  @default("")
+  postalCode              String  @default("")
+  registrationNumber      String  @default("")
+  registrationDate        String  @default("")
+  corporateContacts       Json    @default("[]")
+  companyStamp            String?
+
+  // Joint account secondary holder fields
+  jointFullName           String  @default("")
+  jointGender             String  @default("")
+  jointMaritalStatus      String  @default("")
+  jointNationality        String  @default("")
+  jointTin                String  @default("")
+  jointDob                String  @default("")
+  jointIdType             String  @default("")
+  jointIdNumber           String  @default("")
+  jointIdIssueDate        String  @default("")
+  jointIdExpiryDate       String  @default("")
+  jointRegion             String  @default("")
+  jointCity               String  @default("")
+  jointSubCity            String  @default("")
+  jointWoredaKebele       String  @default("")
+  jointHouseNumber        String  @default("")
+  jointPhone              String  @default("")
+  jointEmail              String  @default("")
+  jointTel                String  @default("")
+  jointResidentialStatus  String  @default("")
+  jointEmploymentStatus   String  @default("")
+  jointEmployerName       String  @default("")
+  jointProfession         String  @default("")
+  jointEmployerAddress    String  @default("")
+  jointBusinessAddress    String  @default("")
+  jointAnnualIncome       String  @default("")
+  jointSourceOfFunds      String  @default("")
+  jointPepStatus          String  @default("no")
+  jointPepDetails         String  @default("")
 
   publiclyTradedOwner      String @default("no")
   publiclyTradedDetails    String @default("")
@@ -104,10 +170,21 @@ model KycApplication {
   fixedIncomeMonthlyValue   String @default("")
 
   investmentObjective Json @default("[]")
+  investmentType      String @default("")
 
-  applicantName       String @default("")
-  dateOfApplication   String @default("")
-  submitConsent         Boolean @default(false)
+  ownerType           String @default("")
+  ownershipCompanies  Json   @default("[]")
+
+  applicantName            String  @default("")
+  applicantSignature       String  @default("")
+  jointApplicantSignature  String  @default("")
+  dateOfApplication        String  @default("")
+  submitConsent              Boolean @default(false)
+  riskDisclosureAck          Boolean @default(false)
+  accountCode                String  @default("")
+  officeUse                  Json    @default("{}")
+  authorizedSignatoryName    String  @default("")
+  authorizedSignatoryTitle   String  @default("")
 
   reviewNotes String   @default("")
   reviewedBy  String?
@@ -138,4 +215,30 @@ model AuditLog {
 model KycCounter {
   id    String @id @default("kyc")
   value Int    @default(100000)
+}
+
+model TradeOrder {
+  id               String   @id @default(cuid())
+  orderId          String   @unique
+  clientName       String
+  idNumber         String
+  csdAccountNumber String
+  symbol           String
+  side             String   // BUY or SELL
+  type             String   // MARKET, LIMIT, STOP, STOP_LIMIT
+  limitPrice       String   @default("")
+  stopPrice        String   @default("")
+  quantity         String   @default("")
+  timeInForce      String   // DAY, GTC, GTD
+  goodTillDate     String   @default("")
+  clientSignature  String   @default("")
+  receivedVia      String   // In Person, Neway App
+  status           String   @default("Pending") // Accepted, Rejected, Pending
+  rejectionReason  String   @default("")
+  traderSignature  String   @default("")
+  receivedBy       String   @default("")
+  dateReceived     String   @default("")
+  timeReceived     String   @default("")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }

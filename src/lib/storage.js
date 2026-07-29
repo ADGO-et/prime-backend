@@ -87,7 +87,7 @@ async function ensureBucket() {
 }
 
 async function persistUploads(files = {}) {
-  const fields = ["faydaFront", "faydaBack", "kebeleId", "drivingLicense"];
+  const fields = ["faydaFront", "faydaBack", "kebeleId", "drivingLicense", "companyStamp"];
   const keys = {};
 
   for (const field of fields) {

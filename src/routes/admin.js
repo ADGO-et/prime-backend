@@ -7,6 +7,7 @@ const {
   toApiApplication,
   summarizeApplication,
   createAuditLog,
+  buildOfficeUseUpdate,
 } = require("../utils/kycHelpers");
 
 const router = express.Router();
@@ -76,6 +77,7 @@ router.get("/documents/:filename", async (req, res) => {
           { faydaBack: filename },
           { kebeleId: filename },
           { drivingLicense: filename },
+          { companyStamp: filename },
         ],
       },
       select: { id: true },
@@ -385,6 +387,87 @@ router.patch("/applications/:id/status", requireRole(...REVIEW_ROLES), async (re
   } catch (err) {
     console.error("Update status error:", err);
     res.status(500).json({ error: "Failed to update status" });
+  }
+});
+
+/**
+ * @swagger
+ * /api/admin/applications/{id}/office:
+ *   patch:
+ *     tags: [Admin]
+ *     summary: Update office-use fields
+ *     description: Set account code and officer verification fields (prepared/approved/checked by). Requires compliance_officer, admin, or super_admin role.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Application ID or reference ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/OfficeUseUpdateRequest'
+ *     responses:
+ *       200:
+ *         description: Office fields updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 application:
+ *                   $ref: '#/components/schemas/KycApplication'
+ *       404:
+ *         description: Application not found
+ */
+router.patch("/applications/:id/office", requireRole(...REVIEW_ROLES), async (req, res) => {
+  try {
+    const existing = await prisma.kycApplication.findFirst({
+      where: {
+        OR: [{ id: req.params.id }, { referenceId: req.params.id }],
+      },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    const partial = buildOfficeUseUpdate(req.body);
+    const data = { ...partial };
+
+    if (partial.officeUse) {
+      const current =
+        existing.officeUse && typeof existing.officeUse === "object" ? existing.officeUse : {};
+      data.officeUse = { ...current, ...partial.officeUse };
+    }
+
+    const application = await prisma.kycApplication.update({
+      where: { id: existing.id },
+      data,
+    });
+
+    await createAuditLog(prisma, {
+      action: "office_fields_updated",
+      referenceId: application.referenceId,
+      reviewedBy: req.adminUser.email,
+      notes: partial.accountCode ? `Account code: ${partial.accountCode}` : "",
+    });
+
+    res.json({
+      success: true,
+      application: toApiApplication(application),
+    });
+  } catch (err) {
+    console.error("Update office fields error:", err);
+    res.status(500).json({ error: "Failed to update office fields" });
   }
 });
 

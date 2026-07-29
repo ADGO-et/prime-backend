@@ -22,6 +22,7 @@ const kycUploadFields = upload.fields([
   { name: "faydaBack", maxCount: 1 },
   { name: "kebeleId", maxCount: 1 },
   { name: "drivingLicense", maxCount: 1 },
+  { name: "companyStamp", maxCount: 1 },
 ]);
 
 module.exports = { kycUploadFields };

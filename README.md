@@ -2,6 +2,8 @@
 
 Node.js + Express + **PostgreSQL** + **Prisma** + JWT auth.
 
+Supports **Individual**, **Corporate**, and **Joint** KYC account opening forms, plus **Trade Order** receiving.
+
 ## Quick Start
 
 ### 1. Start PostgreSQL
@@ -30,7 +32,8 @@ npm run prisma:seed
 npm run dev
 ```
 
-Server: **http://localhost:5000**
+Server: **http://localhost:5000**  
+Swagger: **http://localhost:5000/api-docs**
 
 ## Default admin login
 
@@ -65,14 +68,34 @@ curl http://localhost:5000/health   # storage.mode: "s3"
 
 ## Endpoints
 
-| Method | Path | Auth |
-|--------|------|------|
-| POST | `/api/auth/login` | Public |
-| GET | `/api/auth/me` | JWT |
-| POST | `/api/kyc/submit` | Public (rate-limited) |
-| GET | `/api/admin/*` | JWT |
-| GET | `/api/admin/documents/:filename` | JWT |
-| GET | `/health` | Public |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/auth/login` | Public | Admin login |
+| GET | `/api/auth/me` | JWT | Current admin user |
+| POST | `/api/kyc/submit` | Public | Submit KYC (Individual / Corporate / Joint) |
+| POST | `/api/orders/submit` | Public | Submit trade order |
+| GET | `/api/orders` | JWT | List trade orders |
+| GET | `/api/orders/:id` | JWT | Get trade order |
+| PATCH | `/api/orders/:id/status` | JWT | Accept / reject order |
+| GET | `/api/admin/applications` | JWT | List KYC applications |
+| GET | `/api/admin/applications/:id` | JWT | Get KYC application |
+| PATCH | `/api/admin/applications/:id/status` | JWT | Update KYC status |
+| PATCH | `/api/admin/applications/:id/office` | JWT | Set account code & officer fields |
+| GET | `/api/admin/documents/:filename` | JWT | Download KYC document |
+| GET | `/api/admin/stats` | JWT | Dashboard stats |
+| GET | `/api/admin/audit-log` | JWT | Audit log |
+| GET | `/health` | Public | Health check |
+| GET | `/api-docs` | Public | Swagger UI |
+
+## KYC form types
+
+Set `investorType` on submit:
+
+- `individual` — personal account opening form (default)
+- `corporate` — company account opening form
+- `joint` — joint account opening form (two holders)
+
+Full field mapping: **[docs/KYC_FIELDS.md](docs/KYC_FIELDS.md)**
 
 ## Security (production)
 
@@ -87,3 +110,5 @@ curl http://localhost:5000/health   # storage.mode: "s3"
 KYC files are **not** publicly served. Admins fetch via:
 
 `GET /api/admin/documents/:filename` (JWT required)
+
+Supported document types: Fayda front/back, Kebele ID, driving license, company stamp.
