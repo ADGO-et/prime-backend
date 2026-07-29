@@ -11,7 +11,7 @@ const { seedDatabase } = require("./prisma/seed");
 const kycRoutes = require("./src/routes/kyc");
 const adminRoutes = require("./src/routes/admin");
 const authRoutes = require("./src/routes/auth");
-const orderRoutes = require("./src/routes/orders");
+const { submitRouter, adminOrderRouter } = require("./src/routes/orders");
 const { loginLimiter, adminLimiter } = require("./src/middleware/rateLimit");
 
 validateEnv();
@@ -73,7 +73,8 @@ app.get("/health", async (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/kyc", kycRoutes);
 app.use("/api/admin", adminLimiter, adminRoutes);
-app.use("/api/orders", orderRoutes);
+app.use("/api/admin/orders", adminLimiter, adminOrderRouter);
+app.use("/api/orders", submitRouter);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

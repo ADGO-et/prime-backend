@@ -3,6 +3,7 @@ const { prisma } = require("../lib/prisma");
 const { requireAuth } = require("../middleware/auth");
 const { kycSubmitLimiter } = require("../middleware/rateLimit");
 
+const submitRouter = express.Router();
 const router = express.Router();
 
 async function generateOrderId(prisma) {
@@ -48,7 +49,7 @@ async function generateOrderId(prisma) {
  *       500:
  *         description: Internal server error
  */
-router.post("/submit", kycSubmitLimiter, async (req, res) => {
+submitRouter.post("/submit", kycSubmitLimiter, async (req, res) => {
   try {
     const {
       clientName,
@@ -63,6 +64,7 @@ router.post("/submit", kycSubmitLimiter, async (req, res) => {
       timeInForce,
       goodTillDate = "",
       clientSignature = "",
+      clientSignatureDate = "",
       receivedVia,
     } = req.body;
 
@@ -87,6 +89,7 @@ router.post("/submit", kycSubmitLimiter, async (req, res) => {
         timeInForce,
         goodTillDate,
         clientSignature,
+        clientSignatureDate,
         receivedVia,
         status: "Pending",
       },
@@ -106,9 +109,9 @@ router.post("/submit", kycSubmitLimiter, async (req, res) => {
 
 /**
  * @swagger
- * /api/orders:
+ * /api/admin/orders:
  *   get:
- *     tags: [Orders]
+ *     tags: [Admin]
  *     summary: List trade orders
  *     description: Retrieve a paginated list of trade orders (admin/officer only).
  *     security:
@@ -189,9 +192,9 @@ router.get("/", requireAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/orders/{id}:
+ * /api/admin/orders/{id}:
  *   get:
- *     tags: [Orders]
+ *     tags: [Admin]
  *     summary: Get trade order details
  *     description: Retrieve detailed information for a single order by ID or order ID.
  *     security:
@@ -229,9 +232,9 @@ router.get("/:id", requireAuth, async (req, res) => {
 
 /**
  * @swagger
- * /api/orders/{id}/status:
+ * /api/admin/orders/{id}/status:
  *   patch:
- *     tags: [Orders]
+ *     tags: [Admin]
  *     summary: Update trade order status
  *     description: Accept or reject a trade order (admin/officer only).
  *     security:
@@ -305,4 +308,4 @@ router.patch("/:id/status", requireAuth, async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = { submitRouter, adminOrderRouter: router };

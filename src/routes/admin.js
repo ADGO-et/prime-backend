@@ -280,6 +280,38 @@ router.get("/applications/:id", async (req, res) => {
   }
 });
 
+// The admin UI can use this response as the target of its "Send email" button.
+// It intentionally does not send mail from the server: the browser opens the
+// administrator's configured mail client (Gmail, Outlook, etc.).
+router.get("/applications/:id/email-link", async (req, res) => {
+  try {
+    const application = await prisma.kycApplication.findFirst({
+      where: {
+        OR: [{ id: req.params.id }, { referenceId: req.params.id }],
+      },
+      select: { referenceId: true, email: true },
+    });
+
+    if (!application) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    if (!application.email) {
+      return res.status(400).json({ error: "This application has no email address" });
+    }
+
+    const subject = `Prime Capital — ${application.referenceId}`;
+    res.json({
+      email: application.email,
+      subject,
+      composeUrl: `mailto:${encodeURIComponent(application.email)}?subject=${encodeURIComponent(subject)}`,
+    });
+  } catch (err) {
+    console.error("Get application email link error:", err);
+    res.status(500).json({ error: "Failed to prepare email link" });
+  }
+});
+
 /**
  * @swagger
  * /api/admin/applications/{id}/status:
@@ -505,7 +537,7 @@ router.get("/stats", async (_req, res) => {
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [total, pending, underReview, approved, rejected, revisionRequested, monthlyApps] =
+    const [total, pending, underReview, approved, rejected, revisionRequested, monthlyApps, totalOrders, pendingOrders, acceptedOrders, rejectedOrders] =
       await Promise.all([
         prisma.kycApplication.count(),
         prisma.kycApplication.count({ where: { status: "pending" } }),
@@ -517,6 +549,10 @@ router.get("/stats", async (_req, res) => {
           where: { submittedAt: { gte: monthStart } },
           select: { stockMonthlyValue: true, fixedIncomeMonthlyValue: true },
         }),
+        prisma.tradeOrder.count(),
+        prisma.tradeOrder.count({ where: { status: "Pending" } }),
+        prisma.tradeOrder.count({ where: { status: "Accepted" } }),
+        prisma.tradeOrder.count({ where: { status: "Rejected" } }),
       ]);
 
     const volumeMap = {
@@ -545,6 +581,12 @@ router.get("/stats", async (_req, res) => {
       rejectionRate: total ? Math.round((rejected / total) * 100) : 0,
       monthlyApplications: monthlyApps.length,
       monthlyVolumeForecast: monthlyVolume,
+      orders: {
+        total: totalOrders,
+        pending: pendingOrders,
+        accepted: acceptedOrders,
+        rejected: rejectedOrders,
+      },
     });
   } catch (err) {
     console.error("Stats error:", err);

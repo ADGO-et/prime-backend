@@ -74,11 +74,12 @@ curl http://localhost:5000/health   # storage.mode: "s3"
 | GET | `/api/auth/me` | JWT | Current admin user |
 | POST | `/api/kyc/submit` | Public | Submit KYC (Individual / Corporate / Joint) |
 | POST | `/api/orders/submit` | Public | Submit trade order |
-| GET | `/api/orders` | JWT | List trade orders |
-| GET | `/api/orders/:id` | JWT | Get trade order |
-| PATCH | `/api/orders/:id/status` | JWT | Accept / reject order |
+| GET | `/api/admin/orders` | JWT | List trade orders |
+| GET | `/api/admin/orders/:id` | JWT | Get trade order |
+| PATCH | `/api/admin/orders/:id/status` | JWT | Accept / reject order |
 | GET | `/api/admin/applications` | JWT | List KYC applications |
 | GET | `/api/admin/applications/:id` | JWT | Get KYC application |
+| GET | `/api/admin/applications/:id/email-link` | JWT | Get a mailto link for the applicant |
 | PATCH | `/api/admin/applications/:id/status` | JWT | Update KYC status |
 | PATCH | `/api/admin/applications/:id/office` | JWT | Set account code & officer fields |
 | GET | `/api/admin/documents/:filename` | JWT | Download KYC document |

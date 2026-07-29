@@ -232,6 +232,7 @@ model TradeOrder {
   timeInForce      String   // DAY, GTC, GTD
   goodTillDate     String   @default("")
   clientSignature  String   @default("")
+  clientSignatureDate String @default("")
   receivedVia      String   // In Person, Neway App
   status           String   @default("Pending") // Accepted, Rejected, Pending
   rejectionReason  String   @default("")
